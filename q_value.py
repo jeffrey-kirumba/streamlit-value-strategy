@@ -8,6 +8,8 @@ import streamlit as st
 from PIL import Image
 from statistics import mean
 import base64
+
+#I know it's good practice to put keys in a secrets.py but this is a public api key
 IEX_CLOUD_API_TOKEN = 'Tpk_059b97af715d417d9f49f50b51b1c448'
 
 stocks = pd.read_csv('sp_500_stocks.csv')
@@ -100,7 +102,7 @@ def build_df(portfolio_size):
 
     # Print each percentile score to make sure it was calculated properly
     for metric in metrics.values():
-        print(rv_dataframe[metric])
+        print(rv_dataframe[metric]) 
 
     for row in rv_dataframe.index:
         value_percentiles = []
