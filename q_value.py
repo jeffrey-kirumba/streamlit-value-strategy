@@ -8,7 +8,7 @@ import streamlit as st
 from PIL import Image
 from statistics import mean
 import base64
-from hush1 import IEX_CLOUD_API_TOKEN
+IEX_CLOUD_API_TOKEN = 'Tpk_059b97af715d417d9f49f50b51b1c448'
 
 stocks = pd.read_csv('sp_500_stocks.csv')
 
