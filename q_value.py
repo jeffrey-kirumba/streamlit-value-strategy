@@ -50,40 +50,41 @@ def build_df(portfolio_size):
         batch_api_call_url = f'https://sandbox.iexapis.com/stable/stock/market/batch?symbols={symbol_string}&types=quote,advanced-stats&token={IEX_CLOUD_API_TOKEN}'
         data = requests.get(batch_api_call_url).json()
         for symbol in symbol_string.split(','):
-            enterprise_value = data[symbol]['advanced-stats']['enterpriseValue']
-            ebitda = data[symbol]['advanced-stats']['EBITDA']
-            gross_profit = data[symbol]['advanced-stats']['grossProfit']
+            if not (data.get(symbol) is None):
+                enterprise_value = data[symbol]['advanced-stats']['enterpriseValue']
+                ebitda = data[symbol]['advanced-stats']['EBITDA']
+                gross_profit = data[symbol]['advanced-stats']['grossProfit']
             
-            try:
-                ev_to_ebitda = enterprise_value/ebitda
-            except TypeError:
-                ev_to_ebitda = np.NaN
-            
-            try:
-                ev_to_gross_profit = enterprise_value/gross_profit
-            except TypeError:
-                ev_to_gross_profit = np.NaN
+                try:
+                    ev_to_ebitda = enterprise_value/ebitda
+                except TypeError:
+                    ev_to_ebitda = np.NaN
                 
-            rv_dataframe = rv_dataframe.append(
-                pd.Series([
-                    symbol,
-                    data[symbol]['quote']['latestPrice'],
-                    'N/A',
-                    data[symbol]['quote']['peRatio'],
-                    'N/A',
-                    data[symbol]['advanced-stats']['priceToBook'],
-                    'N/A',
-                    data[symbol]['advanced-stats']['priceToSales'],
-                    'N/A',
-                    ev_to_ebitda,
-                    'N/A',
-                    ev_to_gross_profit,
-                    'N/A',
-                    'N/A'
-            ],
-            index = rv_columns),
-                ignore_index = True
-            )
+                try:
+                    ev_to_gross_profit = enterprise_value/gross_profit
+                except TypeError:
+                    ev_to_gross_profit = np.NaN
+                    
+                rv_dataframe = rv_dataframe.append(
+                    pd.Series([
+                        symbol,
+                        data[symbol]['quote']['latestPrice'],
+                        'N/A',
+                        data[symbol]['quote']['peRatio'],
+                        'N/A',
+                        data[symbol]['advanced-stats']['priceToBook'],
+                        'N/A',
+                        data[symbol]['advanced-stats']['priceToSales'],
+                        'N/A',
+                        ev_to_ebitda,
+                        'N/A',
+                        ev_to_gross_profit,
+                        'N/A',
+                        'N/A'
+                ],
+                index = rv_columns),
+                    ignore_index = True
+                )
 
     for column in ['Price-to-Earnings Ratio', 'Price-to-Book Ratio','Price-to-Sales Ratio',  'EV/EBITDA','EV/GP']:
         rv_dataframe[column].fillna(rv_dataframe[column].mean(), inplace = True)
@@ -117,6 +118,8 @@ def build_df(portfolio_size):
     position_size = float(portfolio_size) / len(rv_dataframe.index)
     for i in range(0, len(rv_dataframe['Ticker'])-1):
         rv_dataframe.loc[i, 'Number of Shares to Buy'] = math.floor(position_size / rv_dataframe['Price'][i])
+    
+    rv_dataframe = rv_dataframe.replace(['N/A'], 0)
 
     return rv_dataframe
 
