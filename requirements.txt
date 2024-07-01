@@ -1,7 +1,8 @@
-streamlit==0.84.0
-pandas==1.2.5
-requests==2.25.1
-numpy==1.21.0
-scipy==1.7.0
-XlsxWriter==1.4.3
-Pillow==8.3.1
+numpy==1.24.2
+pandas==1.5.3
+Pillow==10.4.0
+Requests==2.32.3
+scipy==1.14.0
+streamlit==1.36.0
+XlsxWriter==3.2.0
+yfinance==0.2.40
