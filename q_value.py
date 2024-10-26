@@ -33,10 +33,14 @@ class ValueScreener:
         ]
         self.mainFrame = pd.DataFrame(columns = self.rv_columns)
         self.tickerInfo = {}
-        pass
+        
     def getTickerInfo(self, ticker):
-            symbObj = yf.Ticker(ticker)
-            self.tickerInfo[ticker] = symbObj.info
+            try:
+                symbObj = yf.Ticker(ticker)
+                self.tickerInfo[ticker] = symbObj.info
+            except Exception as e:
+                print(e)
+                print(f'Error getting tick info for {ticker}')
 
     def getAllTickerInfo(self):
         stocks = pd.read_csv('sp_500_stocks.csv')
@@ -57,34 +61,36 @@ class ValueScreener:
             ev_to_ebitda = np.nan
             ev_to_gross_profit = np.nan
             data = self.tickerInfo[symbol]
-            if 'currentPrice' in data:
+            if 'currentPrice' in data and type(data['currentPrice']) != str:
                 latestPrice = data['currentPrice']
-            elif 'regularMarketPreviousClose' in data:
+            elif 'regularMarketPreviousClose' in data and type(data['regularMarketPreviousClose']) != str:
                 latestPrice = data['regularMarketPreviousClose']
-            elif 'previousClose' in data:
+            elif 'previousClose' in data and type(data['previousClose']) != str:
                 latestPrice = data['previousClose']
 
-            if 'trailingPE' in data:
-                peRatio = data['trailingPE']
+            if 'trailingPE' in data and type(data['trailingPE']) != str:
+                peRatio = data['trailingPE'] if data['trailingPE'] else np.nan
 
-            if 'priceToBook' in data:
-                priceToBook = data['priceToBook']
+            if 'priceToBook' in data and type(data['priceToBook']) != str:
+                priceToBook = data['priceToBook'] if data['priceToBook'] else np.nan
 
-            if 'priceToSalesTrailing12Months' in data:
-                priceToSales = data['priceToSalesTrailing12Months']
+            if 'priceToSalesTrailing12Months' in data and type(data['priceToSalesTrailing12Months']) != str:
+                priceToSales = data['priceToSalesTrailing12Months'] if data['priceToSalesTrailing12Months'] else np.nan
 
-            if 'enterpriseValue' in data:
-                enterprise_value = data['enterpriseValue']
+            if 'enterpriseValue' in data and type(data['enterpriseValue']) != str:
+                enterprise_value = data['enterpriseValue'] if data['enterpriseValue'] else np.nan
          
-            if 'ebitda' in data:
-                ebitda = data['ebitda']
+            if 'ebitda' in data and type(data['ebitda']) != str:
+                ebitda = data['ebitda'] if data['ebitda'] else np.nan
       
             if 'grossMargins' in data and 'totalRevenue' in data:
-                gross_profit = data['grossMargins'] * data['totalRevenue']
+                grossMargins = data['grossMargins'] if data['grossMargins'] else np.nan
+                totalRevenue = data['totalRevenue'] if data['totalRevenue'] else np.nan
+                gross_profit = grossMargins * totalRevenue
         
-            if 'enterpriseToEbitda' in data:
-                ev_to_ebitda = data['enterpriseToEbitda']
-            elif ebitda:
+            if 'enterpriseToEbitda' in data and type(data['enterpriseToEbitda']) != str:
+                ev_to_ebitda = data['enterpriseToEbitda'] if data['enterpriseToEbitda'] else np.nan
+            elif ebitda and enterprise_value:
                 ev_to_ebitda = enterprise_value/ebitda
        
             if enterprise_value and gross_profit:
@@ -110,9 +116,10 @@ class ValueScreener:
             self.mainFrame.loc[-1] = series
             self.mainFrame.index+=1
             self.mainFrame.sort_index()
-
+ 
         for column in ['Price-to-Earnings Ratio', 'Price-to-Book Ratio','Price-to-Sales Ratio', 'EV/EBITDA','EV/GP']:
             self.mainFrame[column].fillna(self.mainFrame[column].mean(), inplace = True)
+        
 
         metrics = {
                     'Price-to-Earnings Ratio': 'PE Percentile',
