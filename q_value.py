@@ -171,11 +171,11 @@ vs = ValueScreener()
 displayFrame = None
 st.title('Robust Value Strategy')
 st.write("""
-### This investment strategy selects 50 of the cheapest stocks in the S&P 500 relative to their value (earnings and assets) """)
+### This investment strategy ranks stocks in the S&P 500 by a score generated from common value metrics (EV/EBITDA, Price-to-book etc.) """)
 image = Image.open('stockmarketphoto.jpg')
 st.image(image, use_column_width=True)
 st.write("""
-### From there, it will recommend the number of shares to buy for an equal-weight portfolio of these 50 stocks.
+### From there, it will recommend the number of shares to buy for an equal-weight portfolio of the top 50 stocks.
 """)
 capital = st.number_input('Enter the value of your portfolio')      
 if 'displayFrame' not in st.session_state:
