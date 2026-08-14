@@ -171,9 +171,6 @@ def filedownload(df: pd.DataFrame):
         return href
 
 
-
-
-@st.cache_resource
 def getAllData() -> ValueScreener:
     yfRapper = YFWrap()
     yfRapper.getAllData() 
@@ -182,10 +179,11 @@ def getAllData() -> ValueScreener:
     vs.calcAllTickers()
     return vs
 
-vs = getAllData()
+
 
 
 displayFrame = None
+vs = None
 st.title('Robust Value Strategy')
 st.write("""
 ### This investment strategy ranks stocks in the S&P 500 by a score generated from common value metrics (EV/EBITDA, Price-to-book etc.) """)
@@ -196,19 +194,19 @@ st.write("""
 """)
 capital = st.number_input('Enter the value of your portfolio')
 
-if 'displayFrame' not in st.session_state:
+
+if 'vs' not in st.session_state:
     with st.spinner('Gathering data'):
-        st.session_state.displayFrame = vs.mainFrame
+        vs = getAllData()
+        st.session_state.vs = vs
         displayFrame = vs.mainFrame
 elif capital > 0:
-    vs.mainFrame = st.session_state.displayFrame
-    # print("Applying portfolio size")
+    vs = ValueScreener(tickerInfo=st.session_state.vs.tickerInfo)
+    vs.mainFrame =st.session_state.vs.mainFrame
     displayFrame = vs.applyPortfolioSize(portfolio_size=capital)
-#if count < all
-    #display a warning saying ""
+
 if capital == 0 and displayFrame['Ticker'].count() < 290:
     st.toast("Some tickers were left out, try again later", icon='🫡')
 
 st.markdown(filedownload(displayFrame), unsafe_allow_html=True)
-print(displayFrame.head(n=5))
 st.table(displayFrame)
