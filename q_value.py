@@ -195,6 +195,9 @@ if 'displayFrame' not in st.session_state:
 elif capital > 0:
     vs.mainFrame = st.session_state.displayFrame
     displayFrame = vs.applyPortfolioSize(portfolio_size=capital)
+else:
+    displayFrame = st.session_state.displayFrame
+
 
 if capital == 0 and displayFrame['Ticker'].count() < 290:
     st.toast("Some tickers were left out, try again later", icon='🫡')
