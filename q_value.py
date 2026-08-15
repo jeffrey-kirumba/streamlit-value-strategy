@@ -29,7 +29,7 @@ class YFWrap:
                 ticks = yf.Tickers(arg)
                 allYfTicks.append(ticks)
             
-            with ThreadPoolExecutor() as executor:
+            with ThreadPoolExecutor(max_workers=2) as executor:
                 executor.map(self.getTickerInfo, allYfTicks)
         except Exception as e:
             print(f"yf error: {e}")
@@ -70,7 +70,7 @@ class ValueScreener:
         self.tickerInfo = tickerInfo
         
     def calcAllTickers(self):
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=2) as executor:
                 executor.map(self.calcTicker, list(self.tickerInfo.keys()))
         metrics = {
                     'Price-to-Earnings Ratio': 'PE Percentile',
@@ -170,7 +170,7 @@ def filedownload(df: pd.DataFrame):
         href = f'<a href="data:file/csv;base64,{b64}" download="SP500.csv">Download CSV File</a>'
         return href
 
-
+@st.cache_resource(show_spinner=False)
 def getAllData() -> ValueScreener:
     yfRapper = YFWrap()
     yfRapper.getAllData() 
