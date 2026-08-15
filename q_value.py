@@ -63,6 +63,7 @@ class YFWrap:
     def getTickerInfo(self, ticks: yf.Tickers):
         for symbol in ticks.symbols:
             try:
+                time.sleep(2)
                 self.tickerInfo[symbol] = ticks.tickers[symbol].info        
             except Exception as e:
                 print(f"yf info error {symbol}: {e}")
