@@ -21,12 +21,13 @@ class YFWrap:
     def getAllData(self):
         stocks = pd.read_csv('sp_500_stocks.csv')
         allTickers = list(stocks['Ticker'])
-        args = self.chunks(list(allTickers), 11)
+        groups = len(allTickers) // 11
+        args = self.chunks(list(allTickers), groups)
         try:
             allYfTicks = []
             for arg in args:
                 time.sleep(1)
-                ticks = yf.Tickers(arg)
+                ticks = self.callTick(arg)
                 allYfTicks.append(ticks)
             
             with ThreadPoolExecutor(max_workers=2) as executor:
@@ -34,12 +35,26 @@ class YFWrap:
         except Exception as e:
             print(f"yf error: {e}")
 
-    def getTickerInfo(self, ticks: yf.Tickers):
+    def callTick(self, arg):
         try:
-            for symbol in ticks.symbols:
-                self.tickerInfo[symbol] = ticks.tickers[symbol].info
+            ticks = yf.Tickers(arg)
+            return ticks
         except Exception as e:
-            print(f"yf error: {e}")
+            #if 429, wait 5 seconds and try again
+            print(f"yf bulk request error: {e}")
+            if '429' in e:
+                time.sleep(5)
+                self.callTick(arg=arg)
+
+    def getTickerInfo(self, ticks: yf.Tickers):
+        for symbol in ticks.symbols:
+            try:
+                self.tickerInfo[symbol] = ticks.tickers[symbol].info        
+            except Exception as e:
+                print(f"yf info error {symbol}: {e}")
+                if '429' in e:
+                    time.sleep(5)
+                continue
 
     def chunks(self, lst, n):
         """Yield successive n-sized chunks from lst."""
@@ -180,32 +195,37 @@ def getAllData() -> ValueScreener:
     vs.calcAllTickers()
     return vs
 
-
-if 'running' not in st.session_state or not st.session_state.running:
+def buttonPushed():
+    #set flag
     with st.spinner('Gathering data'):
         vs = getAllData()
-    st.session_state.running = True
+        if vs.mainFrame.empty:
+            st.toast("Something went wrong, try again later", icon='🫡')
+        else:
+            st.session_state.buttonPushed = True
+            st.session_state.displayFrame = vs.mainFrame
 
-displayFrame = None
 st.title('Robust Value Strategy')
 st.write("""
 ### From there, it will recommend the number of shares to buy for an equal-weight portfolio of the top 50 stocks.
 """)   
-capital = st.number_input('Enter the value of your portfolio')
 
-if 'displayFrame' not in st.session_state:
-    with st.spinner('Gathering data'):
-        st.session_state.displayFrame = vs.mainFrame
-        displayFrame = vs.mainFrame
-elif capital > 0:
-    vs.mainFrame = st.session_state.displayFrame
-    displayFrame = vs.applyPortfolioSize(portfolio_size=capital)
-else:
+displayFrame = None
+vs = None
+#st -> frame, buttonPushed
+
+if 'buttonPushed' not in st.session_state:
+    st.button(label='Get Data', on_click=buttonPushed)
+
+if 'displayFrame' in st.session_state and 'buttonPushed' in st.session_state:
     displayFrame = st.session_state.displayFrame
+    capital = st.number_input('Enter the value of your portfolio')
+    if capital > 0:
+        vs = ValueScreener(tickerInfo={})
+        vs.mainFrame = st.session_state.displayFrame
+        displayFrame = vs.applyPortfolioSize(portfolio_size=capital)
 
-
-if capital == 0 and displayFrame['Ticker'].count() < 290:
-    st.toast("Some tickers were left out, try again later", icon='🫡')
-
-st.markdown(filedownload(displayFrame), unsafe_allow_html=True)
-st.table(displayFrame)
+    st.markdown(filedownload(displayFrame), unsafe_allow_html=True)
+    st.table(displayFrame)
+    pass
+   
