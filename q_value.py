@@ -21,11 +21,11 @@ class YFWrap:
     def getAllData(self):
         stocks = pd.read_csv('sp_500_stocks.csv')
         allTickers = list(stocks['Ticker'])
-        groups = len(allTickers) // 8
-        args = self.chunks(list(allTickers), groups)
+        args = self.chunks(list(allTickers), 11)
         try:
             allYfTicks = []
             for arg in args:
+                time.sleep(1)
                 ticks = yf.Tickers(arg)
                 allYfTicks.append(ticks)
             
@@ -180,7 +180,9 @@ def getAllData() -> ValueScreener:
     vs.calcAllTickers()
     return vs
 
-vs = getAllData()
+with st.spinner('Gathering data'):
+    vs = getAllData()
+
 displayFrame = None
 st.title('Robust Value Strategy')
 st.write("""
