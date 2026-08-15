@@ -180,8 +180,11 @@ def getAllData() -> ValueScreener:
     vs.calcAllTickers()
     return vs
 
-with st.spinner('Gathering data'):
-    vs = getAllData()
+
+if 'running' not in st.session_state or not st.session_state.running:
+    with st.spinner('Gathering data'):
+        vs = getAllData()
+    st.session_state.running = True
 
 displayFrame = None
 st.title('Robust Value Strategy')
