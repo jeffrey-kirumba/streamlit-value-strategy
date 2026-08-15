@@ -18,33 +18,47 @@ class YFWrap:
     def __init__(self) -> None:
         self.tickerInfo = {}
     
+    # def getAllData(self):
+    #     stocks = pd.read_csv('sp_500_stocks.csv')
+    #     allTickers = list(stocks['Ticker'])
+    #     groups = len(allTickers) // 11
+    #     args = self.chunks(list(allTickers), groups)
+    #     try:
+    #         allYfTicks = []
+    #         for arg in args:
+    #             time.sleep(1)
+    #             ticks = self.callTick(arg)
+    #             allYfTicks.append(ticks)
+    #         with ThreadPoolExecutor(max_workers=2) as executor:
+    #             executor.map(self.getTickerInfo, allYfTicks)
+    #     except Exception as e:
+    #         print(f"yf error: {e}")
+
     def getAllData(self):
-        stocks = pd.read_csv('sp_500_stocks.csv')
-        allTickers = list(stocks['Ticker'])
-        groups = len(allTickers) // 11
-        args = self.chunks(list(allTickers), groups)
         try:
+            stocks = pd.read_csv('sp_500_stocks.csv')
+            allTickers = list(stocks['Ticker'])
+            groups = len(allTickers) // 11
+            args = self.chunks(list(allTickers), groups)
             allYfTicks = []
             for arg in args:
-                time.sleep(1)
                 ticks = self.callTick(arg)
                 allYfTicks.append(ticks)
-            
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                executor.map(self.getTickerInfo, allYfTicks)
+            for ticks in allYfTicks:
+                self.getTickerInfo(ticks=ticks)
         except Exception as e:
-            print(f"yf error: {e}")
+            print(f"Error while getting all ticker info: {e}")
 
     def callTick(self, arg):
         try:
             ticks = yf.Tickers(arg)
             return ticks
         except Exception as e:
-            #if 429, wait 5 seconds and try again
             print(f"yf bulk request error: {e}")
-            if '429' in e:
-                time.sleep(5)
-                self.callTick(arg=arg)
+            # if '429' in str(e):
+            #     print(f"sleeping retrying")
+            #     time.sleep(5)
+            #     self.callTick(arg=arg)
 
     def getTickerInfo(self, ticks: yf.Tickers):
         for symbol in ticks.symbols:
@@ -52,8 +66,10 @@ class YFWrap:
                 self.tickerInfo[symbol] = ticks.tickers[symbol].info        
             except Exception as e:
                 print(f"yf info error {symbol}: {e}")
-                if '429' in e:
-                    time.sleep(5)
+                if 'Expecting' in str(e):
+                    print(f"sleeping {symbol}.info trying again in 10 seconds")
+                    time.sleep(10)
+                    self.tickerInfo[symbol] = ticks.tickers[symbol].info
                 continue
 
     def chunks(self, lst, n):
