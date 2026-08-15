@@ -192,7 +192,7 @@ st.image(image, use_column_width=True)
 st.write("""
 ### From there, it will recommend the number of shares to buy for an equal-weight portfolio of the top 50 stocks.
 """)
-capital = st.number_input('Value of your portfolio')
+capital = st.number_input('Enter the value of your portfolio')
 
 
 if 'vs' not in st.session_state:
@@ -204,6 +204,11 @@ elif capital > 0:
     vs = ValueScreener(tickerInfo=st.session_state.vs.tickerInfo)
     vs.mainFrame =st.session_state.vs.mainFrame
     displayFrame = vs.applyPortfolioSize(portfolio_size=capital)
+elif not displayFrame:
+    with st.spinner('Gathering data'):
+        vs = getAllData()
+        st.session_state.vs = vs
+        displayFrame = vs.mainFrame
 
 if capital == 0 and displayFrame['Ticker'].count() < 290:
     st.toast("Some tickers were left out, try again later", icon='🫡')
