@@ -1,6 +1,6 @@
 import numpy as np 
 import pandas as pd 
-import time
+import time, os
 import requests 
 import xlsxwriter 
 import math 
@@ -172,6 +172,7 @@ def filedownload(df: pd.DataFrame):
 
 @st.cache_resource(show_spinner=False)
 def getAllData() -> ValueScreener:
+    print(f"getAllData START pid={os.getpid()} t={time.time()}", flush=True)
     yfRapper = YFWrap()
     yfRapper.getAllData() 
     vs = ValueScreener(tickerInfo=yfRapper.tickerInfo)
@@ -179,36 +180,21 @@ def getAllData() -> ValueScreener:
     vs.calcAllTickers()
     return vs
 
-
-
-
+vs = getAllData()
 displayFrame = None
-vs = None
 st.title('Robust Value Strategy')
 st.write("""
-### This investment strategy ranks stocks in the S&P 500 by a score generated from common value metrics (EV/EBITDA, Price-to-book etc.) """)
-image = Image.open('stockmarketphoto.jpg')
-st.image(image, use_column_width=True)
-st.write("""
 ### From there, it will recommend the number of shares to buy for an equal-weight portfolio of the top 50 stocks.
-""")
+""")   
 capital = st.number_input('Enter the value of your portfolio')
 
-
-if 'vs' not in st.session_state:
+if 'displayFrame' not in st.session_state:
     with st.spinner('Gathering data'):
-        vs = getAllData()
-        st.session_state.vs = vs
+        st.session_state.displayFrame = vs.mainFrame
         displayFrame = vs.mainFrame
 elif capital > 0:
-    vs = ValueScreener(tickerInfo=st.session_state.vs.tickerInfo)
-    vs.mainFrame =st.session_state.vs.mainFrame
+    vs.mainFrame = st.session_state.displayFrame
     displayFrame = vs.applyPortfolioSize(portfolio_size=capital)
-elif not displayFrame:
-    with st.spinner('Gathering data'):
-        vs = getAllData()
-        st.session_state.vs = vs
-        displayFrame = vs.mainFrame
 
 if capital == 0 and displayFrame['Ticker'].count() < 290:
     st.toast("Some tickers were left out, try again later", icon='🫡')
