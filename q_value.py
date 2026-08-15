@@ -192,7 +192,7 @@ st.image(image, use_column_width=True)
 st.write("""
 ### From there, it will recommend the number of shares to buy for an equal-weight portfolio of the top 50 stocks.
 """)
-capital = st.number_input('Enter the value of your portfolio')
+capital = st.number_input('Value of your portfolio')
 
 
 if 'vs' not in st.session_state:
