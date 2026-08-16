@@ -101,6 +101,9 @@ class ValueScreener:
 
         self.mainFrame['RV Score'] = self.mainFrame[list(metrics.values())].mean(axis=1)
         self.mainFrame = self.mainFrame.sort_values(by = 'RV Score', ascending = False)
+        self.mainFrame = self.mainFrame.sort_values(by = 'RV Score', ascending = False)
+        self.mainFrame = self.mainFrame[:50]
+        # self.mainFrame.to_csv("value_output.csv", index=False)
 
 
     
@@ -171,9 +174,9 @@ class ValueScreener:
         self.mainFrame.index+=1
         self.mainFrame.sort_index()
 
-    def applyPortfolioSize(self, portfolio_size):
-        mainFrame = self.mainFrame.sort_values(by = 'RV Score', ascending = False)
-        mainFrame = mainFrame[:50]
+    def applyPortfolioSize(self, portfolio_size, mainFrame: pd.DataFrame):
+        if mainFrame.empty:
+            mainFrame = self.mainFrame
         position_size = float(portfolio_size) / len(mainFrame.index)
         mainFrame['Number of Shares to Buy'] = mainFrame['Price'].rfloordiv(position_size)
         mainFrame = mainFrame.replace(['N/A'], 0)
@@ -212,21 +215,31 @@ st.write("""
 """)   
 
 displayFrame = None
-vs = None
-#st -> frame, buttonPushed
+vs = ValueScreener(tickerInfo={})
 
-if 'buttonPushed' not in st.session_state:
-    st.button(label='Get Data', on_click=buttonPushed)
+#uncomment, to run locally
+# if 'buttonPushed' not in st.session_state:
+#     st.button(label='Get Data', on_click=buttonPushed)
 
-if 'displayFrame' in st.session_state and 'buttonPushed' in st.session_state:
-    displayFrame = st.session_state.displayFrame
-    capital = st.number_input('Enter the value of your portfolio')
-    if capital > 0:
-        vs = ValueScreener(tickerInfo={})
-        vs.mainFrame = st.session_state.displayFrame
-        displayFrame = vs.applyPortfolioSize(portfolio_size=capital)
+# if 'displayFrame' in st.session_state and 'buttonPushed' in st.session_state:
+#     displayFrame = st.session_state.displayFrame
+#     capital = st.number_input('Enter the value of your portfolio')
+#     if capital > 0:
+#         vs = ValueScreener(tickerInfo={})
+#         vs.mainFrame = st.session_state.displayFrame
+#         displayFrame = vs.applyPortfolioSize(portfolio_size=capital)
 
-    st.markdown(filedownload(displayFrame), unsafe_allow_html=True)
-    st.table(displayFrame)
-    pass
+#     st.markdown(filedownload(displayFrame), unsafe_allow_html=True)
+#     st.table(displayFrame)
+
+displayFrame = pd.read_csv(
+    "value_output.csv",
+    engine="python",
+    on_bad_lines="skip"
+)
+capital = st.number_input('Enter the value of your portfolio')
+if capital > 0:
+    displayFrame = vs.applyPortfolioSize(portfolio_size=capital, mainFrame=displayFrame)
+st.table(displayFrame)
+
    
