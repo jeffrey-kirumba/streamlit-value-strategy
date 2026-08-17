@@ -211,7 +211,9 @@ def buttonPushed():
 
 st.title('Robust Value Strategy')
 st.write("""
-### From there, it will recommend the number of shares to buy for an equal-weight portfolio of the top 50 stocks.
+##### This investment strategy ranks stocks in the S&P 500 by a score generated from common value metrics (EV/EBITDA, Price-to-book etc.) """)
+st.write("""
+##### From there, it will recommend the number of shares to buy for an equal-weight portfolio of the top 50 stocks.
 """)   
 
 displayFrame = None
